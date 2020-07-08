@@ -46,16 +46,6 @@ list에서 수정/삭제 버튼을 클릭 시 팝업으로 열리는 화면이 �
 
 
 <f:form action="inputstaff.do" method="post" modelAttribute="hibernateList" onsubmit="return dataParsing()">
-		
-
-<c:choose>
-	<c:when test="${empty hibernateList }">
-		
-	 </c:when>
-	 
-	 <c:otherwise>
-	</c:otherwise>
-</c:choose>	
 	
 		<table border="1">
 			<col width="50" />
@@ -69,11 +59,11 @@ list에서 수정/삭제 버튼을 클릭 시 팝업으로 열리는 화면이 �
 	<!-- row1 -->
 	<tr>
 	<c:choose>
-		<c:when test="${dummyUpdateDto }">
-			<th colspan="6"><span>사원 정보 수정</span></th>
+		<c:when test="${empty dummyUpdateDto }">
+			<th colspan="6"><span>사원 정보 등록</span></th>
 		</c:when>
 		<c:otherwise>
-			<th colspan="6"><span>사원 정보 등록</span></th>
+			<th colspan="6"><span>사원 정보 수정</span></th>
 		</c:otherwise>
 	</c:choose>
 	</tr>
@@ -133,7 +123,7 @@ list에서 수정/삭제 버튼을 클릭 시 팝업으로 열리는 화면이 �
 				 <!-- 작성필요 -->
 					<select class="graduateday"  onchange="">
 						<option></option>
-						<c:forEach var="i" begin="1980" end="2019" step="1">
+						<c:forEach var="i" begin="1980" end="2020" step="1">
 							<option class="graduateday_yy" value="${i}">${i}년</option>
 						</c:forEach>
 					</select> 년
@@ -157,15 +147,13 @@ list에서 수정/삭제 버튼을 클릭 시 팝업으로 열리는 화면이 �
 	</tr>
 </table>
 <c:choose>
-	<c:when test="${dummyUpdateDto}">
-	<!-- 경로에 따라 Dto 보내주는걸 다르게. 그 값이 test로 들어오면 -->
-	<input type="submit" value="수정" onclick=""/>
-	<input type="button" value="삭제" onclick=""/>
+	<c:when test="${empty dummyUpdateDto}">	
+		<input type="submit" value="등록"/>
+		<input type="reset" value="초기화"/>
 	</c:when>
 	<c:otherwise>
-	<!-- 경로에 따라 Dto 보내주는걸 다르게. 그 값이 test로 안오면 -->	
-	<input type="submit" value="등록" onclick=""/>
-	<input type="button" value="초기화" onclick=""/>
+		<input type="submit" value="수정"/>
+		<input type="button" value="삭제" onclick="location.href='goboardlist.do'"/>
 	</c:otherwise>
 
 </c:choose>

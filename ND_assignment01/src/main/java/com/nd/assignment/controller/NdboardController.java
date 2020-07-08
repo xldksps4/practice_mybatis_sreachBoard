@@ -1,6 +1,7 @@
 package com.nd.assignment.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -33,7 +34,6 @@ public class NdboardController {
 
 	@Autowired
 	private HibernateBiz hibernateBiz;
-	
 
 	// 리스트 페이지로 가기
 	@RequestMapping(value = "/goboardlist.do")
@@ -71,13 +71,11 @@ public class NdboardController {
 
 		HibernateStaffDto hibernateList = new HibernateStaffDto();
 		model.addAttribute("hibernateList", hibernateList);
-		return "staff_input_form";
+		return "staff_updel_form";
 	}
 
 	// 글작성 완료
 
-	
-	
 	// 글 수정페이지로 가기
 	@RequestMapping(value = "/goboardupdate.do", method = RequestMethod.GET)
 	public String goBoardUpdate(Model model, @RequestParam("staffno") int staffno, TotalStaffDto totalstaffDto) {
@@ -87,13 +85,13 @@ public class NdboardController {
 		// 글번호 조회
 		totalstaffDto = totalstaffBiz.selectOne(staffno);
 		logger.info("[Controller]__[DB_Result]__hibernateList 값 >>>" + totalstaffDto);
-		
-		/* 추가 : 날자 형식 변환  1983-12-21 00:00:00 >>>  1983-12-21 */
-		
-		 totalstaffDto.setGraduateday(totalstaffDto.getGraduateday().substring(0,10)); 
-		
+
+		/* 추가 : 날자 형식 변환 1983-12-21 00:00:00 >>> 1983-12-21 */
+
+		totalstaffDto.setGraduateday(totalstaffDto.getGraduateday().substring(0, 10));
+
 		// 글수정 페이지 구분자 dummyUpdateDto
-		String dummyUpdateDto = "dummy";
+		String dummyUpdateDto = totalstaffDto.getJuminno();
 
 		model.addAttribute("hibernateList", totalstaffDto);
 		model.addAttribute("dummyUpdateDto", dummyUpdateDto);
@@ -106,79 +104,88 @@ public class NdboardController {
 	public String inputStaff(Model model, @ModelAttribute("hibernateList") @Valid HibernateStaffDto hibernateList,
 			BindingResult result) {
 		logger.info("[Controller]____inputStaff입니다. dto값 >>>>" + hibernateList);
-		
+
 		if (result.hasErrors()) {
-			logger.info("유효성검사 >>>> 실행 hibernateList >>>"+hibernateList);
+			logger.info("유효성검사 >>>> 실행 hibernateList >>>" + hibernateList);
 			List<ObjectError> list = result.getAllErrors();
 			for (ObjectError error : list) {
 				logger.info("에러 실행중 >>>> error >>>>" + error);
 				System.out.println(error);
 			}
 			logger.info("유효성검사 >>>> 실패");
-			
-			// model.addAttribute("hibernateList", hibernateList);  필요없음 뷰로 리턴시 @Valid가 자동으로 해줌  
+
+			// model.addAttribute("hibernateList", hibernateList); 필요없음 뷰로 리턴시 @Valid가 자동으로
+			// 해줌
 			return "staff_updel_form";
-			
-			
+
 		} else {
 			logger.info("유효성 검사 >>>> 통과  : " + hibernateList);
-			
-			// [#1 유효성 검사 이후 ] >>>>>  DB에 값 추가전에  [String skillname] => [List<String> skillnameList] 
+
+			// [#1 유효성 검사 이후 ] >>>>> DB에 값 추가전에 [String skillname] => [List<String>
+			// skillnameList]
 			if (hibernateList.getSkillname() != null) {
 
 				String[] skillnameArray = hibernateList.getSkillname().split(",");
-				logger.info("skillnameArray >>>"+skillnameArray.toString());
+				logger.info("skillnameArray >>>" + Arrays.toString(skillnameArray));
 				List<String> skillnameList = new ArrayList<String>();
 
 				for (int j = 0; j < skillnameArray.length; j++) {
 					skillnameList.add(skillnameArray[j]);
 				}
-				
+
 				hibernateList.setSkillnameList(skillnameList);
-				
+
 			}
-			
-			// [#2 유효성 검사 이후 ] >>>>> 주민번호 조회  등록 유무로 insert, update 판단. 
-			
-			
-			
-			// [#3 유효성 검사 이후 ] >>>>> insert
-			
-			
-			
-			// [#4 유효성 검사 이후 ] >>>>> update
-			
-			
+			// String JUMIN_NO = biz.selectOne(skillnameList.getJUMIN_NO());
 
-			logger.info("[DB]글작성 업데이트 성공여부. updateRes : " + hibernateList); // <<<<<<<<<<<성공, 1
+			// [#2 유효성 검사 이후 ] >>>>> 주민번호 조회 등록 유무로 insert, update 판단.
+			logger.info("juminDto 검사시작");
+			HibernateStaffDto juminDto = hibernateBiz.selectJumin(hibernateList);
+			logger.info("juminDto 검사종료");
+		
 
-//					if (updateRes > 0) {
-			logger.info("[Controller]__[DB_Result]__infoUpdate 성공 >>>> ");
-//						HibernateStaffDto hibernateStaffDtoRes = totalstaffBiz.selectOne(sduserDto.getSduemail());
-			HibernateStaffDto hibernateStaffDtoRes = hibernateBiz.selectOne(hibernateList.getStaffno());
+			if (juminDto == null) { // [#3 유효성 검사 이후 ] >>>>> insert
+				logger.info("등록되어 있지 않음 >>>>> insert!!");
+				int insertRes = hibernateBiz.insertInfo(hibernateList);
+				logger.info("[DB]글작성 성공여부. insertRes : " + hibernateList); // <<<<<<<<<<<성공, 1
 
-			model.addAttribute("totalList", hibernateStaffDtoRes);
-			logger.info("작성 성공 후 화면 전환 직전 값 확인" + hibernateStaffDtoRes); // <<<<<<<<<<<<<얘는 null
+				if (insertRes > 0) {
+					logger.info("[Controller]__[DB_Result]__infoUpdate 성공 >>>> ");
+//					HibernateStaffDto hibernateStaffDtoRes = totalstaffBiz.selectOne(sduserDto.getSduemail());
+					// HibernateStaffDto hibernateStaffDtoRes =
+					// hibernateBiz.selectOne(hibernateList.getStaffno());
 
-			return "redirect:/goboardlist.do";
-//					}
+					// model.addAttribute("totalList", hibernateStaffDtoRes);
+					// logger.info("작성 성공 후 화면 전환 직전 값 확인" + hibernateStaffDtoRes); //
+					// <<<<<<<<<<<<<얘는 null
+					logger.info("작성 성공 후 화면 전환 직전 값 확인");
+					return "redirect:/goboardlist.do";
+				}
+
+			} else if (juminDto != null) { // [#4 유효성 검사 이후 ] >>>>> update
+				logger.info("등록되어 있지 않음 >>>>> update!!");
+				int updateRes = hibernateBiz.updateInfo(hibernateList);
+				logger.info("[DB]글작성 업데이트 성공여부. updateRes : " + hibernateList); // <<<<<<<<<<<성공, 1
+				if (updateRes > 0) {
+					logger.info("[Controller]__[DB_Result]__infoUpdate 성공 >>>> ");
+//					HibernateStaffDto hibernateStaffDtoRes = totalstaffBiz.selectOne(sduserDto.getSduemail());
+					// HibernateStaffDto hibernateStaffDtoRes =
+					// hibernateBiz.selectOne(hibernateList.getStaffno());
+
+					// model.addAttribute("totalList", hibernateStaffDtoRes);
+					// logger.info("작성 성공 후 화면 전환 직전 값 확인" + hibernateStaffDtoRes); //
+					// <<<<<<<<<<<<<얘는 null
+					logger.info("작성 성공 후 화면 전환 직전 값 확인");
+					return "redirect:/goboardlist.do";
+				}
+
+			}
 
 		}
-//				return"redirect:/goboardlist.do";		
+
+		return "redirect:/goboardlist.do";
 	}
 
 	// 글 삭제 완료
 
-	
-	public String makeDate() {
-		String s=null;
-		
-		
-		return "s";
-	}
-	public static void main(String[] args) {
-		String date= "";
-		
-		
-	}
 }
